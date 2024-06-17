@@ -14,4 +14,5 @@ export class VerifyOtpDto {
   otp: number;
 
   save: boolean;
+  newEmail: string;
 }

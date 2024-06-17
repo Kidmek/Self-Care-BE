@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -38,6 +39,7 @@ export class User {
   @Column({ type: 'date', nullable: true })
   birthDate: Date;
 
+  @Exclude()
   @Column({ type: 'varchar' })
   password: string;
 
@@ -50,9 +52,11 @@ export class User {
   @Column({ default: false })
   isActive: boolean;
 
+  @Exclude()
   @Column({ type: 'int', nullable: true })
   otp: number;
 
+  @Exclude()
   @Column({ type: 'timestamp', nullable: true })
   otpSentAt: Date;
 
@@ -63,12 +67,14 @@ export class User {
   })
   role: UserRole;
 
+  @Exclude()
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
   })
   public createdAt: Date;
 
+  @Exclude()
   @UpdateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',

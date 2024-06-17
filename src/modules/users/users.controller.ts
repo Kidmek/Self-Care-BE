@@ -1,17 +1,24 @@
 import {
   Controller,
   Get,
-  // Patch,
   Param,
   Delete,
   Query,
+  HttpStatus,
+  UseGuards,
+  HttpCode,
+  Body,
+  Put,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ApiTags } from '@nestjs/swagger';
 import { PageQueryDto } from 'src/common/dto/page-query.dto';
 import { PageDto } from 'src/common/dto/page.dto';
 import { UserDto } from './dto/user.dto';
-import { UserRole } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
+import { AuthGuard } from '../auth/auth.guard';
+import { UserDecorator } from 'src/common/user.decorator';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 @ApiTags('users')
@@ -36,10 +43,12 @@ export class UsersController {
     return this.usersService.findOneByUsername(username);
   }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.usersService.update(+id, updateUserDto);
-  // }
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  @Put()
+  update(@UserDecorator() user: User, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(user, updateUserDto);
+  }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

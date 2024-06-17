@@ -13,6 +13,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EmailService } from '../email/email.service';
 import { getSecondsDiff } from 'src/config/utils';
 import { Constants } from 'src/config/constants';
+import { classToPlain } from 'class-transformer';
 
 @Injectable()
 export class AuthService {
@@ -24,9 +25,20 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
+  async getSelf(user: User) {
+    return classToPlain(await this.usersService.findOneById(user.id));
+  }
   async createToken(user: User): Promise<string> {
-    const payload = { sub: user.id, username: user.username };
+    const payload = { id: user.id, username: user.username };
     return await this.jwtService.signAsync(payload);
+  }
+
+  async checkPassword(user: User, password: string) {
+    user = await this.usersService.findOneById(user.id);
+    const isMatch = bcrypt.compareSync(password, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Wrong password');
+    }
   }
 
   async signIn(username: string, pass: string): Promise<any> {
@@ -125,9 +137,14 @@ export class AuthService {
     }
   }
 
-  async validateOtp(email: string, otp: number, save?: boolean) {
+  async validateOtp(
+    email: string,
+    otp: number,
+    save?: boolean,
+    newEmail?: string,
+  ) {
     const user = await this.usersRepository.findOneBy({ email });
-
+    console.log(newEmail, email);
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -139,6 +156,7 @@ export class AuthService {
         if (save !== false) {
           user.otp = null;
           user.isActive = true;
+          user.email = newEmail;
           this.usersRepository.save(user);
         }
         return true;
@@ -150,7 +168,12 @@ export class AuthService {
     }
   }
 
-  async sendOtp(username?: string, user?: User, register?: boolean) {
+  async sendOtp(
+    username?: string,
+    user?: User,
+    register?: boolean,
+    newEmail?: string,
+  ) {
     if (!user) {
       if (!username) {
         throw new BadRequestException('Username Required');
@@ -163,6 +186,7 @@ export class AuthService {
     }
 
     if (
+      false &&
       user.otpSentAt &&
       getSecondsDiff(user.otpSentAt, new Date()) < Constants.otpResend * 60
     ) {
@@ -172,16 +196,16 @@ export class AuthService {
     const otp = Math.floor(100000 + Math.random() * 900000);
     user.otp = otp;
     user.otpSentAt = new Date();
-
+    console.log(otp);
     const isEmailSent = !register
       ? await this.emailService.forgotPasswordEmail({
           name: user.firstName + ' ' + user.lastName,
-          email: user.email,
+          email: newEmail ?? user.email,
           otp,
         })
       : await this.emailService.verifyEmail({
           name: user.firstName + ' ' + user.lastName,
-          email: user.email,
+          email: newEmail ?? user.email,
           otp,
         });
 
@@ -190,5 +214,28 @@ export class AuthService {
     }
     await this.usersRepository.save(user);
     return isEmailSent;
+  }
+
+  async newPass(user: User, password: string) {
+    user = await this.usersService.findOneById(user.id);
+
+    user.password = await bcrypt.hash(password, 10);
+    user.otp = null;
+    this.usersRepository.save(user);
+    return true;
+  }
+  async newEmail(user: User, newEmail: string) {
+    if (!newEmail) {
+      throw new BadRequestException('Email required');
+    }
+    user = await this.usersService.findOneById(user.id);
+    if (
+      await this.usersRepository.findOneBy({
+        email: newEmail,
+      })
+    ) {
+      throw new BadRequestException('Email taken');
+    }
+    await this.sendOtp(null, user, true, newEmail);
   }
 }
