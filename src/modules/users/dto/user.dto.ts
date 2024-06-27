@@ -7,8 +7,6 @@ export class UserDto {
 
   lastName: string;
 
-  username: string;
-
   email: string;
 
   birthDate: Date;

@@ -8,6 +8,7 @@ import { UserDto } from './dto/user.dto';
 import { PageQueryDto } from 'src/common/dto/page-query.dto';
 import { PageMetaDto } from 'src/common/dto/page-meta.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Constants } from 'src/config/constants';
 
 @Injectable()
 export class UsersService {
@@ -54,26 +55,36 @@ export class UsersService {
     return await this.usersRepository.findOneBy({ id });
   }
 
-  findOneByUsername(username: string) {
-    return this.usersRepository.findOneBy({ username });
+  async findOneByPhone(phone: string) {
+    if (phone?.length) {
+      phone = phone.slice(-9);
+      return await this.usersRepository.findOneBy({ phone });
+    } else {
+      throw new BadRequestException('Invalid Phone');
+    }
+  }
+
+  async findOneByEmailOrPhone(emailOrPhone: string) {
+    return emailOrPhone?.match(Constants.phoneRegEx)
+      ? await this.findOneByPhone(emailOrPhone)
+      : await this.findOneByEmail(emailOrPhone);
+  }
+
+  async findOneByEmail(email: string) {
+    if (email?.length) {
+      return await this.usersRepository.findOneBy({ email });
+    } else {
+      throw new BadRequestException('Invalid Email');
+    }
   }
 
   async update(user: User, updateUserDto: UpdateUserDto) {
     user = await this.findOneById(user.id);
-    if (
-      user.username != updateUserDto.username &&
-      (await this.usersRepository.findOneBy({
-        username: updateUserDto.username,
-      }))
-    ) {
-      throw new BadRequestException('Username taken');
-    }
+
     user.birthDate = updateUserDto.birthDate;
     user.firstName = updateUserDto.firstName;
     user.lastName = updateUserDto.lastName;
     user.gender = updateUserDto.gender;
-    // user.email = updateUserDto.email;
-    user.username = updateUserDto.username;
     return this.toUserDto(await this.usersRepository.save(user));
   }
 

@@ -9,4 +9,6 @@ export const Constants = {
   otpExpire: 1,
   otpResend: 2,
   uploadDir: 'uploads',
+  phoneRegEx: /^(?:\+251|0)\d{9}$/,
+  phone: '910101010',
 };

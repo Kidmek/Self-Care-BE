@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
   Get,
+  ParseBoolPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthReqDto } from './dto/auth-req.dto';
@@ -49,23 +50,24 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('resend-otp')
   sendOtp(
-    @Query('username') username: string,
-    @Query('register') register?: boolean,
+    @Query('email') emailOrPhone: string,
+    @Query('isEmail', ParseBoolPipe) isEmail: boolean,
+    @Query('register', ParseBoolPipe) register?: boolean,
     @Query('newEmail') newEmail?: string,
   ) {
-    const user = new User();
-    user.email = newEmail;
     return this.authService.sendOtp(
-      username,
-      user.email ? user : null,
+      isEmail,
+      emailOrPhone,
+      null,
       register,
+      newEmail,
     );
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('reset-pass')
-  resetPass(@Query('email') email: string) {
-    return this.authService.resetPassword(email);
+  resetPass(@Query('emailOrPhone') emailOrPhone: string) {
+    return this.authService.resetPassword(emailOrPhone);
   }
 
   @HttpCode(HttpStatus.OK)

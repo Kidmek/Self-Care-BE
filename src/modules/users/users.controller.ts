@@ -38,9 +38,9 @@ export class UsersController {
     return this.usersService.findOneById(+id);
   }
 
-  @Get('username/:uname')
-  findOneByUsername(@Param('uname') username: string) {
-    return this.usersService.findOneByUsername(username);
+  @Get('email/:email')
+  findOneByEmail(@Param('uname') email: string) {
+    return this.usersService.findOneByEmail(email);
   }
 
   @HttpCode(HttpStatus.OK)

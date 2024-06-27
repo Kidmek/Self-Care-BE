@@ -6,11 +6,23 @@ import { Constants } from 'src/config/constants';
 export class EmailService {
   constructor(private readonly mailerService: MailerService) {}
 
-  async forgotPasswordEmail(data: { name: any; email: any; otp: any }) {
+  async forgotPasswordEmail(
+    data: {
+      name: any;
+      email: any;
+      otp: any;
+    },
+    isEmail: boolean,
+  ) {
     const { name, email, otp } = data;
 
     const subject = `Welcome to ${Constants.name}`;
-
+    if (isEmail) {
+      console.log('Sent Forgot Pass Email');
+      return true;
+    } else {
+      return await this.sendText(email, otp);
+    }
     try {
       const response = await this.mailerService.sendMail({
         to: email,
@@ -38,15 +50,24 @@ export class EmailService {
     }
   }
 
-  async verifyEmail(data: {
-    name: any;
-    email: any;
-    otp: any;
-    jwt?: any;
-  }): Promise<boolean> {
+  async verifyEmail(
+    data: {
+      name: any;
+      email: any;
+      otp: any;
+    },
+    isEmail: boolean,
+  ): Promise<boolean> {
     const { name, email, otp } = data;
 
     const subject = `${Constants.name} Verify Email`;
+    console.log('Is email', typeof isEmail);
+    if (isEmail) {
+      console.log('Sent Verification Email');
+      return true;
+    } else {
+      return await this.sendText(email, otp);
+    }
     try {
       const response = await this.mailerService.sendMail({
         to: email,
@@ -72,5 +93,10 @@ export class EmailService {
       console.log(e);
       return false;
     }
+  }
+
+  async sendText(phone: string, message: string) {
+    console.log('Sending', message, 'Text to ', phone);
+    return true;
   }
 }

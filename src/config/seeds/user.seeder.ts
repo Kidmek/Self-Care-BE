@@ -10,7 +10,7 @@ export default class UserSeeder implements Seeder {
 
     if (
       await repository.findOneBy({
-        username: 'admin',
+        phone: Constants.phone,
       })
     ) {
       return;
@@ -21,10 +21,10 @@ export default class UserSeeder implements Seeder {
     user.birthDate = new Date();
     user.email = Constants.email;
     user.role = UserRole.ADMIN;
-    user.username = 'admin';
     user.password = await bcrypt.hash('password', 10);
     user.gender = Gender.A;
     user.isActive = true;
+    user.phone = Constants.phone;
     console.log('Created admin,', await repository.save(user));
   }
 }

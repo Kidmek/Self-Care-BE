@@ -9,8 +9,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { EmailModule } from './modules/email/email.module';
-import { TipsModule } from './tips/tips.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { FeedbacksModule } from './modules/feedbacks/feedbacks.module';
+import { TipsModule } from './modules/tips/tips.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
     AuthModule,
     EmailModule,
     TipsModule,
+    FeedbacksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

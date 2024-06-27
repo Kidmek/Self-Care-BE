@@ -1,13 +1,14 @@
 import {
-  IsAlphanumeric,
   IsEmail,
   IsEnum,
   IsNotEmpty,
   IsString,
+  Matches,
   MinLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Gender } from '../entities/user.entity';
+import { Constants } from 'src/config/constants';
 
 export class CreateUserDto {
   @IsString()
@@ -23,17 +24,16 @@ export class CreateUserDto {
   lastName: string;
 
   @IsNotEmpty()
-  @MinLength(3, { message: 'Username must have atleast 3 characters.' })
-  @IsAlphanumeric('en-US', {
-    message: 'Username does not allow other than alpha numeric chars.',
-  })
-  @ApiProperty()
-  username: string;
-
-  @IsNotEmpty()
   @IsEmail({}, { message: 'Please provide valid Email.' })
   @ApiProperty()
   email: string;
+
+  @IsNotEmpty()
+  @Matches(Constants.phoneRegEx, {
+    message: 'Please provide a valid Phone',
+  })
+  @ApiProperty()
+  phone: string;
 
   @ApiProperty()
   birthDate?: Date;

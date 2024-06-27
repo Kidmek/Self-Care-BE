@@ -1,8 +1,10 @@
 import { Exclude } from 'class-transformer';
+import { Feedback } from 'src/modules/feedbacks/entities/feedback.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -30,11 +32,11 @@ export class User {
   @Column({ type: 'varchar', length: 20 })
   lastName: string;
 
-  @Column({ type: 'varchar', length: 15, unique: true })
-  username: string;
-
   @Column({ type: 'varchar', length: 40, unique: true })
   email: string;
+
+  @Column({ type: 'varchar', length: 15, unique: true })
+  phone: string;
 
   @Column({ type: 'date', nullable: true })
   birthDate: Date;
@@ -66,6 +68,9 @@ export class User {
     default: UserRole.CUSTOMER,
   })
   role: UserRole;
+
+  @OneToMany(() => Feedback, (feedback) => feedback.user)
+  feedbacks: Feedback[];
 
   @Exclude()
   @CreateDateColumn({
