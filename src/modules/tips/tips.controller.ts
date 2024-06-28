@@ -13,12 +13,13 @@ import { TipsService } from './tips.service';
 import { CreateTipDto } from './dto/create-tip.dto';
 import { UpdateTipDto } from './dto/update-tip.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileValidationPipe } from './interceptor/file.pipe';
 import { memoryStorage } from 'multer';
 import { TipType } from './entities/tip.entity';
 
 @Controller('tips')
+@ApiTags('tips')
 export class TipsController {
   constructor(private readonly tipsService: TipsService) {}
 

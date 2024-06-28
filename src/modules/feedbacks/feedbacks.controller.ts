@@ -12,8 +12,10 @@ import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { UserDecorator } from 'src/common/user.decorator';
 import { User } from '../users/entities/user.entity';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('feedbacks')
+@ApiTags('feedbacks')
 export class FeedbacksController {
   constructor(private readonly feedbacksService: FeedbacksService) {}
 
