@@ -12,6 +12,7 @@ enum AnalyticName {
   USER = 'User',
   FEEDBACK = 'Feedback',
   TIP = 'Tip',
+  CUSTOMER = 'Customer',
 }
 @Injectable()
 export class AnalyticsService {
@@ -80,7 +81,43 @@ export class AnalyticsService {
       .addSelect('COUNT(users.id)', 'count')
       .groupBy('users.role')
       .getRawMany();
+    const totalCustomersByGender = await this.userRepository
+      .createQueryBuilder('users')
+      .select('users.gender', 'name')
+      .addSelect('COUNT(users.id)', 'count')
+      .where({
+        role: 'customer',
+      })
+      .groupBy('users.gender')
+      .getRawMany();
+    const totalUsersByStatus = await this.userRepository
+      .createQueryBuilder('users')
+      .select('users.isActive', 'name')
+      .addSelect('COUNT(users.id)', 'count')
+      .where({
+        role: 'admin',
+      })
+      .groupBy('users.isActive')
+      .getRawMany();
+
+    // const totalCustomersByAge = this.userRepository.query(`
+    //         SELECT
+    //             CASE
+    //                 WHEN age BETWEEN 0 AND 20 THEN 'Below 20'
+    //                 WHEN age BETWEEN 21 AND 30 THEN '21-30'
+    //                 WHEN age BETWEEN 31 AND 40 THEN '31-40'
+    //                 WHEN age BETWEEN 41 AND 50 THEN '41-50'
+    //                 WHEN age BETWEEN 51 AND 60 THEN '51-60'
+    //                 WHEN age BETWEEN 61 AND 70 THEN '61-70'
+    //                 ELSE 'Above 70'
+    //             END AS AgeRange,
+    //             COUNT(*) AS Count
+    //         FROM
+    //             (SELECT EXTRACT(YEAR FROM AGE(CURRENT_DATE, "birthDate")) AS age FROM users where role = 'customer') as ages
+    //         GROUP BY AgeRange
+    //     `);
     const totalFeedback = await this.feedbackRepository.count();
+    const totalSavedAnalytic = await this.analyticRepository.find();
     const totalTips: TotalAnalytics[] = await this.tipRepository
       .createQueryBuilder('tip')
       .select('tip.type', 'name')
@@ -101,9 +138,55 @@ export class AnalyticsService {
 
     totalList.push(new TotalAnalytics(AnalyticName.FEEDBACK, totalFeedback));
 
-    return totalList.reduce((res, item) => {
-      res[item.name] = item.count;
-      return res;
-    }, {});
+    const res = {
+      totalList: totalList.reduce((res, item) => {
+        res[item.name] = item.count;
+        return res;
+      }, {}),
+      doughnutStat: {
+        totalCustomersByGender,
+        totalSavedAnalytic,
+        totalUsersByStatus,
+        // totalCustomersByAge,
+      },
+    };
+
+    return res;
+  }
+
+  async findByYear(year: number) {
+    const totalList: TotalAnalytics[] = [];
+
+    const years = await this.userRepository
+      .createQueryBuilder('user')
+      .select('EXTRACT(YEAR FROM user.createdAt)', 'year')
+      .distinct(true)
+      .orderBy('year', 'ASC')
+      .getRawMany();
+
+    const customers = await this.userRepository
+      .createQueryBuilder('user')
+      .select('EXTRACT(MONTH FROM user.createdAt)', 'name')
+      .addSelect('COUNT(*)', 'count')
+      .where({
+        role: 'customer',
+      })
+      .groupBy('EXTRACT(MONTH FROM user.createdAt)')
+      .addGroupBy('EXTRACT(YEAR FROM user.createdAt)')
+      .having('EXTRACT(YEAR FROM user.createdAt) = :year', { year })
+      .getRawMany();
+
+    customers.forEach((t) => {
+      totalList.push(
+        new TotalAnalytics(`${AnalyticName.CUSTOMER} ${t.name}`, t.count),
+      );
+    });
+
+    const res = {
+      data: totalList,
+      years,
+    };
+
+    return res;
   }
 }

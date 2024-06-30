@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
@@ -15,6 +15,11 @@ export class AnalyticsController {
   @Get()
   findAll() {
     return this.analyticsService.findAll();
+  }
+
+  @Get(':year')
+  findCustomersByYear(@Param('year') year: number) {
+    return this.analyticsService.findByYear(year);
   }
 
   @UseGuards(AuthGuard)

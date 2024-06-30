@@ -54,6 +54,9 @@ export class TipsService {
 
     tip.description = createTipDto.description;
     tip.title = createTipDto.title;
+
+    tip.amh_description = createTipDto.amh_description;
+    tip.amh_title = createTipDto.amh_title;
     tip.type = createTipDto.type;
     await this.mediasRepository.save(medias);
     tip.media = medias;

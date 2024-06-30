@@ -26,6 +26,12 @@ export class Tip {
   @Column({ type: 'varchar' })
   description: string;
 
+  @Column({ type: 'varchar', length: 40 })
+  amh_title: string;
+
+  @Column({ type: 'varchar' })
+  amh_description: string;
+
   @OneToMany(() => Media, (media) => media.tip, {
     eager: true,
   })

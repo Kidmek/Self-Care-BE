@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { FeedbacksService } from './feedbacks.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
@@ -13,6 +14,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { UserDecorator } from 'src/common/user.decorator';
 import { User } from '../users/entities/user.entity';
 import { ApiTags } from '@nestjs/swagger';
+import { PageQueryDto } from 'src/common/dto/page-query.dto';
 
 @Controller('feedbacks')
 @ApiTags('feedbacks')
@@ -29,8 +31,8 @@ export class FeedbacksController {
   }
 
   @Get()
-  findAll() {
-    return this.feedbacksService.findAll();
+  findAll(@Query() pageQueryDto: PageQueryDto) {
+    return this.feedbacksService.findAll(pageQueryDto);
   }
 
   @Get(':id')

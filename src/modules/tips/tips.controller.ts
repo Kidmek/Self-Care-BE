@@ -63,6 +63,15 @@ export class TipsController {
           type: 'string',
           description: 'Description of the tip',
         },
+        amh_title: {
+          type: 'string',
+          description: 'Amharic Title must not be longer than 40 characters.',
+          maxLength: 40,
+        },
+        amh_description: {
+          type: 'string',
+          description: 'Amharic Description of the tip',
+        },
         type: {
           enum: Object.keys(TipType),
           description: 'Type of tip',
