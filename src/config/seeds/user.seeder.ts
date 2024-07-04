@@ -24,7 +24,7 @@ export default class UserSeeder implements Seeder {
     user.password = await bcrypt.hash('password', 10);
     user.gender = Gender.A;
     user.isActive = true;
-    user.phone = Constants.phone;
+    user.phone = Constants.phone.slice(-9);
     console.log('Created admin,', await repository.save(user));
   }
 }

@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 
 export class ChangePassOtpDto {
   @IsNotEmpty()
-  @IsEmail({}, { message: 'Please provide valid Email.' })
   @ApiProperty()
   email: string;
 

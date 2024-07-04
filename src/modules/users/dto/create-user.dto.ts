@@ -2,12 +2,13 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Matches,
   MinLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Gender } from '../entities/user.entity';
+import { Gender, UserRole } from '../entities/user.entity';
 import { Constants } from 'src/config/constants';
 
 export class CreateUserDto {
@@ -23,7 +24,7 @@ export class CreateUserDto {
   @ApiProperty()
   lastName: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsEmail({}, { message: 'Please provide valid Email.' })
   @ApiProperty()
   email: string;
@@ -37,6 +38,12 @@ export class CreateUserDto {
 
   @ApiProperty()
   birthDate?: Date;
+
+  @ApiProperty()
+  role?: UserRole;
+
+  @ApiProperty()
+  id?: number;
 
   @IsString()
   @IsEnum(Gender, { message: 'Must be either Female or Male' })

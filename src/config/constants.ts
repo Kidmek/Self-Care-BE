@@ -10,5 +10,6 @@ export const Constants = {
   otpResend: 2,
   uploadDir: 'uploads',
   phoneRegEx: /^(?:\+251|0)\d{9}$/,
+  emailRegEx: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
   phone: '910101010',
 };

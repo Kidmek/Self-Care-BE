@@ -1,5 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-// import { UpdateUserDto } from './dto/update-user.dto';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -9,6 +12,8 @@ import { PageQueryDto } from 'src/common/dto/page-query.dto';
 import { PageMetaDto } from 'src/common/dto/page-meta.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Constants } from 'src/config/constants';
+import { CreateUserDto } from './dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -19,14 +24,16 @@ export class UsersService {
 
   async findAll(
     pageQueryDto: PageQueryDto,
+    admin: User,
     role?: UserRole,
   ): Promise<PageDto<UserDto>> {
+    await this.checkPrivilage(admin);
     const queryBuilder = this.usersRepository.createQueryBuilder('users');
 
     if (pageQueryDto.query) {
-      const search = `%${pageQueryDto.query}%`;
+      const search = `${pageQueryDto.query}%`;
       queryBuilder.where(
-        'users.email LIKE :search OR users.username LIKE :search OR users.firstName LIKE :search OR users.lastName LIKE :search',
+        'users.email LIKE :search OR users.phone LIKE :search OR users.firstName LIKE :search OR users.lastName LIKE :search',
         { search },
       );
     }
@@ -34,6 +41,8 @@ export class UsersService {
     // Add role filter only if it's provided and not null
     if (role) {
       queryBuilder.andWhere('users.role = :role', { role });
+    } else {
+      queryBuilder.andWhere('users.role <> :role', { role: 'customer' });
     }
     queryBuilder
       .orderBy('users.createdAt', pageQueryDto.order)
@@ -41,7 +50,7 @@ export class UsersService {
       .take(pageQueryDto.take);
 
     const itemCount = await queryBuilder.getCount();
-    const { entities } = await queryBuilder.getRawAndEntities();
+    const entities = await queryBuilder.getMany();
 
     const pageMetaDto = new PageMetaDto({ itemCount, pageQueryDto });
 
@@ -52,6 +61,10 @@ export class UsersService {
   }
 
   async findOneById(id: number): Promise<User> {
+    const found = await this.usersRepository.findOneBy({ id });
+    if (!found) {
+      throw new BadRequestException('User not found');
+    }
     return await this.usersRepository.findOneBy({ id });
   }
 
@@ -60,21 +73,21 @@ export class UsersService {
       phone = phone.slice(-9);
       return await this.usersRepository.findOneBy({ phone });
     } else {
-      throw new BadRequestException('Invalid Phone');
+      throw new BadRequestException('Phone not registered');
     }
   }
 
   async findOneByEmailOrPhone(emailOrPhone: string) {
-    return emailOrPhone?.match(Constants.phoneRegEx)
-      ? await this.findOneByPhone(emailOrPhone)
-      : await this.findOneByEmail(emailOrPhone);
+    return emailOrPhone?.match(Constants.emailRegEx)
+      ? await this.findOneByEmail(emailOrPhone)
+      : await this.findOneByPhone(emailOrPhone);
   }
 
   async findOneByEmail(email: string) {
     if (email?.length) {
       return await this.usersRepository.findOneBy({ email });
     } else {
-      throw new BadRequestException('Invalid Email');
+      throw new BadRequestException('Email not registered');
     }
   }
 
@@ -88,14 +101,56 @@ export class UsersService {
     return this.toUserDto(await this.usersRepository.save(user));
   }
 
-  remove(id: number) {
-    return this.usersRepository.delete(id);
+  async create(admin: User, createUserDto: CreateUserDto) {
+    await this.checkPrivilage(admin);
+    let user = new User();
+
+    if (createUserDto.id) {
+      user = await this.findOneById(createUserDto.id);
+    }
+    if (user.phone !== createUserDto.phone.slice(-9)) {
+      if (await this.findOneByPhone(createUserDto.phone)) {
+        throw new BadRequestException('Phone taken');
+      }
+    }
+
+    user.phone = createUserDto.phone.slice(-9);
+    user.birthDate = createUserDto.birthDate;
+    user.firstName = createUserDto.firstName;
+    user.lastName = createUserDto.lastName;
+    user.gender = createUserDto.gender;
+    user.role = createUserDto.role;
+    user.isActive = true;
+    user.password = await bcrypt.hash(createUserDto.password, 10);
+
+    return this.toUserDto(await this.usersRepository.save(user));
   }
 
-  private toUserDto(user: User): UserDto {
+  async remove(admin: User, id: number) {
+    await this.checkPrivilage(admin);
+    await this.usersRepository.delete(id);
+    return true;
+  }
+
+  async changeEnabled(admin: User, id: number, enabled: boolean) {
+    await this.checkPrivilage(admin);
+    const user = await this.findOneById(id);
+    user.isActive = enabled;
+    await this.usersRepository.save(user);
+    return true;
+  }
+
+  toUserDto(user: User): UserDto {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, otp, otpSentAt, ...rest } = user;
 
     return rest;
+  }
+
+  async checkPrivilage(user: User) {
+    user = await this.findOneById(user.id);
+    if (user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException();
+    }
   }
 }

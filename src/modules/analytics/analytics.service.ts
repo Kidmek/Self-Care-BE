@@ -1,6 +1,6 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Feedback } from '../feedbacks/entities/feedback.entity';
 import { Tip } from '../tips/entities/tip.entity';
@@ -95,9 +95,19 @@ export class AnalyticsService {
       .select('users.isActive', 'name')
       .addSelect('COUNT(users.id)', 'count')
       .where({
-        role: 'admin',
+        role: Not('customer'),
       })
       .groupBy('users.isActive')
+      .getRawMany();
+
+    const totalUsersByRole = await this.userRepository
+      .createQueryBuilder('users')
+      .select('users.role', 'name')
+      .addSelect('COUNT(users.id)', 'count')
+      .where({
+        role: Not('customer'),
+      })
+      .groupBy('users.role')
       .getRawMany();
 
     // const totalCustomersByAge = this.userRepository.query(`
@@ -148,6 +158,7 @@ export class AnalyticsService {
         totalSavedAnalytic,
         totalUsersByStatus,
         // totalCustomersByAge,
+        totalUsersByRole,
       },
     };
 

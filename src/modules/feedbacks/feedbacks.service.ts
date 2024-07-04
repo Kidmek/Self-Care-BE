@@ -27,11 +27,16 @@ export class FeedbacksService {
   }
 
   async findAll(pageQueryDto: PageQueryDto) {
-    const queryBuilder = this.feedbackRepostiory.createQueryBuilder('feedback');
+    const queryBuilder = this.feedbackRepostiory
+      .createQueryBuilder('feedback')
+      .leftJoinAndSelect('feedback.user', 'user');
+
     if (pageQueryDto.query) {
-      const search = `%${pageQueryDto.query}%`;
+      const search = `${pageQueryDto.query}%`;
       queryBuilder.where(
-        'feedback.user.email LIKE :search OR feedback.user.username LIKE :search OR feedback.user.firstName LIKE :search OR feedback.user.lastName LIKE :search',
+        'user.email LIKE :search OR ' +
+          'user.phone LIKE :search OR ' +
+          'user.firstName LIKE :search OR user.lastName LIKE :search',
         { search },
       );
     }
@@ -42,11 +47,19 @@ export class FeedbacksService {
       .take(pageQueryDto.take);
 
     const itemCount = await queryBuilder.getCount();
-    const { entities } = await queryBuilder.getRawAndEntities();
+    const entities = await queryBuilder.getMany();
 
     const pageMetaDto = new PageMetaDto({ itemCount, pageQueryDto });
 
-    return new PageDto(entities, pageMetaDto);
+    return new PageDto(
+      entities.map((e) => {
+        return {
+          ...e,
+          user: this.userService.toUserDto(e.user),
+        };
+      }),
+      pageMetaDto,
+    );
   }
 
   findOne(id: number) {

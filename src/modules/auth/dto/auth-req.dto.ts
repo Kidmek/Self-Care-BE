@@ -18,4 +18,7 @@ export class AuthReqDto {
   @MinLength(5, { message: 'Password must have atleast 5 characters.' })
   @ApiProperty()
   password: string;
+
+  @ApiProperty()
+  admin: boolean;
 }

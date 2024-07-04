@@ -9,6 +9,8 @@ import {
   HttpCode,
   Body,
   Put,
+  Post,
+  ParseBoolPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ApiTags } from '@nestjs/swagger';
@@ -19,6 +21,7 @@ import { User, UserRole } from './entities/user.entity';
 import { AuthGuard } from '../auth/auth.guard';
 import { UserDecorator } from 'src/common/user.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 @ApiTags('users')
@@ -26,21 +29,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
+  @UseGuards(AuthGuard)
   findAll(
     @Query() pageQueryDto: PageQueryDto,
+    @UserDecorator() user: User,
     @Query('role') role?: UserRole,
   ): Promise<PageDto<UserDto>> {
-    return this.usersService.findAll(pageQueryDto, role);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOneById(+id);
-  }
-
-  @Get('email/:email')
-  findOneByEmail(@Param('uname') email: string) {
-    return this.usersService.findOneByEmail(email);
+    return this.usersService.findAll(pageQueryDto, user, role);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -50,8 +45,26 @@ export class UsersController {
     return this.usersService.update(user, updateUserDto);
   }
 
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  @Post()
+  create(@UserDecorator() user: User, @Body() creatUserDto: CreateUserDto) {
+    return this.usersService.create(user, creatUserDto);
+  }
+
+  @UseGuards(AuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  remove(@UserDecorator() user: User, @Param('id') id: string) {
+    return this.usersService.remove(user, +id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Put(':id')
+  changeEnabled(
+    @UserDecorator() user: User,
+    @Param('id') id: string,
+    @Query('enabled', ParseBoolPipe) enabled: boolean,
+  ) {
+    return this.usersService.changeEnabled(user, +id, enabled);
   }
 }

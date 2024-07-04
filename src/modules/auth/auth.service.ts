@@ -6,7 +6,7 @@ import {
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from '../users/dto/create-user.dto';
-import { User } from '../users/entities/user.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +14,7 @@ import { EmailService } from '../email/email.service';
 import { getSecondsDiff } from 'src/config/utils';
 import { Constants } from 'src/config/constants';
 import { classToPlain } from 'class-transformer';
+import { AuthReqDto } from './dto/auth-req.dto';
 
 @Injectable()
 export class AuthService {
@@ -41,18 +42,32 @@ export class AuthService {
     }
   }
 
-  async signIn(emailOrPhone: string, pass: string): Promise<any> {
+  async signIn(signInDto: AuthReqDto): Promise<any> {
+    const { password: pass, username: emailOrPhone } = signInDto;
     const user = await this.usersService.findOneByEmailOrPhone(emailOrPhone);
+
     if (!user) {
       throw new UnauthorizedException();
     }
 
     const isMatch: boolean = bcrypt.compareSync(pass, user.password);
+
     if (!isMatch) {
       throw new UnauthorizedException();
     }
+    if (user.role === UserRole.CUSTOMER) {
+      if (signInDto.admin) {
+        throw new UnauthorizedException();
+      }
+    } else {
+      if (!user.isActive) {
+        throw new BadRequestException('Inactive contact admin');
+      }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, otp, ...rest } = user;
+
     return {
       user: rest,
       token: rest.isActive ? await this.createToken(user) : null,
@@ -60,11 +75,7 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto): Promise<any> {
-    if (
-      await this.usersRepository.findOneBy({
-        email: createUserDto.email,
-      })
-    ) {
+    if (await this.usersService.findOneByEmail(createUserDto.email)) {
       throw new BadRequestException('Email taken');
     }
     if (await this.usersService.findOneByPhone(createUserDto.phone)) {
@@ -111,7 +122,7 @@ export class AuthService {
   }
 
   async changePassword(email: string, password: string, otp: number) {
-    const user = await this.usersRepository.findOneBy({ email });
+    const user = await this.usersService.findOneByEmailOrPhone(email);
 
     if (!user) {
       throw new BadRequestException('User not found');
@@ -139,8 +150,7 @@ export class AuthService {
     save?: boolean,
     newEmail?: string,
   ) {
-    const user = await this.usersRepository.findOneBy({ email });
-    console.log(newEmail, email);
+    const user = await this.usersService.findOneByEmailOrPhone(email);
     if (!user) {
       throw new BadRequestException('User not found');
     }
