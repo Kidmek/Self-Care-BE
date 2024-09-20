@@ -13,6 +13,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { FeedbacksModule } from './modules/feedbacks/feedbacks.module';
 import { TipsModule } from './modules/tips/tips.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { CustomLogger } from './config/custom.logger';
 
 @Module({
   imports: [
@@ -33,6 +34,6 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     AnalyticsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, CustomLogger],
 })
 export class AppModule {}

@@ -1,13 +1,7 @@
 import { Exclude } from 'class-transformer';
+import { Base } from 'src/common/base';
 import { Feedback } from 'src/modules/feedbacks/entities/feedback.entity';
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -20,7 +14,7 @@ export enum Gender {
   A = 'Admin',
 }
 @Entity('users')
-export class User {
+export class User extends Base {
   /**
    * this decorator will help to auto generate id for the table.
    */
@@ -72,19 +66,4 @@ export class User {
 
   @OneToMany(() => Feedback, (feedback) => feedback.user)
   feedbacks: Feedback[];
-
-  @Exclude()
-  @CreateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP(6)',
-  })
-  public createdAt: Date;
-
-  @Exclude()
-  @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP(6)',
-    onUpdate: 'CURRENT_TIMESTAMP(6)',
-  })
-  public updatedAt: Date;
 }

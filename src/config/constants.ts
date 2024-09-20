@@ -1,9 +1,9 @@
 export const Constants = {
-  name: 'Sage',
-  description: 'Sage Training',
+  name: 'እኔ ለእኔ',
+  description: 'እኔ ለእኔ',
   version: '1.0',
   email: 'testingotp099@gmail.com',
-  website: 'www.sage.com',
+  website: 'www.እኔለእኔ.com',
   country: 'Ethiopia',
   city: 'Addis Ababa',
   otpExpire: 1,
@@ -12,4 +12,5 @@ export const Constants = {
   phoneRegEx: /^(?:\+251|0)\d{9}$/,
   emailRegEx: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
   phone: '910101010',
+  password: 'password',
 };

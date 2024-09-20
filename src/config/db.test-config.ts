@@ -1,4 +1,4 @@
-import { DataSourceOptions } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
 import { config } from 'dotenv';
 
@@ -17,10 +17,15 @@ export const dataSourceOptions: DataSourceOptions & SeederOptions = {
   port: parseInt(getEnv('DB_PORT'), 10) || 5432,
   username: getEnv('DB_USERNAME'),
   password: getEnv('DB_PASSWORD'),
-  database: getEnv('DB_NAME'),
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  database: 'sagetest',
+  entities: [__dirname + '/db.test-entity.ts'],
   synchronize: true,
-  // logging: true,
-  logging: ['query', 'error'],
   seeds: ['dist/config/seeds/**.seeder.js'],
 };
+
+// Create and export the DataSource instance
+export const dataSource = new DataSource(dataSourceOptions);
+
+dataSource.entityMetadatas.forEach((entity) => {
+  console.log(entity.tableName);
+});

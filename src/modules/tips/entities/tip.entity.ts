@@ -1,12 +1,6 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
-import { Media } from './file.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Media } from './media.entity';
+import { Base } from 'src/common/base';
 
 export enum TipType {
   SLEEPING = 'sleeping',
@@ -16,7 +10,7 @@ export enum TipType {
 }
 
 @Entity()
-export class Tip {
+export class Tip extends Base {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -42,17 +36,4 @@ export class Tip {
     enum: TipType,
   })
   type: TipType;
-
-  @CreateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP(6)',
-  })
-  public createdAt: Date;
-
-  @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP(6)',
-    onUpdate: 'CURRENT_TIMESTAMP(6)',
-  })
-  public updatedAt: Date;
 }

@@ -21,7 +21,7 @@ export default class UserSeeder implements Seeder {
     user.birthDate = new Date();
     user.email = Constants.email;
     user.role = UserRole.ADMIN;
-    user.password = await bcrypt.hash('password', 10);
+    user.password = await bcrypt.hash(Constants.password, 10);
     user.gender = Gender.A;
     user.isActive = true;
     user.phone = Constants.phone.slice(-9);

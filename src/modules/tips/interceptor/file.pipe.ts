@@ -14,7 +14,7 @@ export class FileValidationPipe implements PipeTransform {
     let isPicture = true;
     let isVideo = true;
     // Assuming you have predefined size limits and file types
-    const MAX_SIZE = 15 * 1024 * 1024; // 5MB for example
+    const MAX_SIZE = 15 * 1024 * 1024; // 15MB for example
     const allowedPictureTypes = 'image/';
     const allowedVideoTypes = 'video/';
     if (value) {

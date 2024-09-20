@@ -192,12 +192,12 @@ export class AuthService {
       throw new BadRequestException('User not found');
     }
 
-    // if (
-    //   user.otpSentAt &&
-    //   getSecondsDiff(user.otpSentAt, new Date()) < Constants.otpResend * 60
-    // ) {
-    //   throw new BadRequestException('OTP resend time not reached');
-    // }
+    if (
+      user.otpSentAt &&
+      getSecondsDiff(user.otpSentAt, new Date()) < Constants.otpResend * 60
+    ) {
+      throw new BadRequestException('OTP resend time not reached');
+    }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
     user.otp = otp;

@@ -5,7 +5,7 @@ import { Constants } from 'src/config/constants';
 import { existsSync, mkdirSync, writeFile, unlink } from 'fs';
 import { join } from 'path';
 import { Tip, TipType } from './entities/tip.entity';
-import { Media } from './entities/file.entity';
+import { Media } from './entities/media.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 

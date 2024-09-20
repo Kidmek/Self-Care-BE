@@ -16,11 +16,8 @@ export class EmailService {
   ) {
     const { name, email, otp } = data;
 
-    const subject = `Welcome to ${Constants.name}`;
-    if (isEmail) {
-      console.log('Sent Forgot Pass Email');
-      return true;
-    } else {
+    const subject = `${Constants.name} password reset`;
+    if (!isEmail) {
       return await this.sendText(email, otp);
     }
     try {
@@ -61,11 +58,7 @@ export class EmailService {
     const { name, email, otp } = data;
 
     const subject = `${Constants.name} Verify Email`;
-    console.log('Is email', typeof isEmail);
-    if (isEmail) {
-      console.log('Sent Verification Email');
-      return true;
-    } else {
+    if (!isEmail) {
       return await this.sendText(email, otp);
     }
     try {
