@@ -11,7 +11,7 @@ import { UserDto } from './dto/user.dto';
 import { PageQueryDto } from 'src/common/dto/page-query.dto';
 import { PageMetaDto } from 'src/common/dto/page-meta.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Constants } from 'src/config/constants';
+import { Constants, ErrorMessages, Language } from 'src/config/constants';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -91,13 +91,39 @@ export class UsersService {
     }
   }
 
-  async update(user: User, updateUserDto: UpdateUserDto) {
+  async updateSelf(
+    user: User,
+    updateUserDto: UpdateUserDto,
+    lang: Language = 'en',
+  ) {
     user = await this.findOneById(user.id);
 
-    user.birthDate = updateUserDto.birthDate;
     user.firstName = updateUserDto.firstName;
     user.lastName = updateUserDto.lastName;
-    user.gender = updateUserDto.gender;
+    if (updateUserDto.email && user.email !== updateUserDto.email) {
+      if (await this.findOneByEmailOrPhone(updateUserDto.email)) {
+        throw new BadRequestException(ErrorMessages[lang].emailTaken);
+      }
+      user.email = updateUserDto.email;
+    }
+
+    if (updateUserDto.phone && user.phone !== updateUserDto.phone.slice(-9)) {
+      if (await this.findOneByEmailOrPhone(updateUserDto.phone)) {
+        throw new BadRequestException(ErrorMessages[lang].phoneTaken);
+      }
+      user.phone = updateUserDto.phone;
+    }
+
+    if (updateUserDto.birthDate) {
+      user.birthDate = updateUserDto.birthDate;
+    }
+    if (updateUserDto.gender) {
+      user.gender = updateUserDto.gender;
+    }
+
+    if (updateUserDto.password) {
+      user.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
     return this.toUserDto(await this.usersRepository.save(user));
   }
 
@@ -111,6 +137,11 @@ export class UsersService {
     if (user.phone !== createUserDto.phone.slice(-9)) {
       if (await this.findOneByPhone(createUserDto.phone)) {
         throw new BadRequestException('Phone taken');
+      }
+    }
+    if (user.email !== createUserDto.email) {
+      if (await this.findOneByEmail(createUserDto.email)) {
+        throw new BadRequestException('Email taken');
       }
     }
 

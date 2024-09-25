@@ -15,24 +15,25 @@ import { CustomLogger } from './config/custom.logger';
 config();
 
 async function bootstrap() {
-  // Override console.log to also write to the file
-  console.log = (message: any, ...optionalParams: any[]) => {
-    logger.info(message, ...optionalParams);
-  };
-  console.error = (message: any, ...optionalParams: any[]) => {
-    logger.error(message, ...optionalParams);
-  };
-
-  console.warn = (message: any, ...optionalParams: any[]) => {
-    logger.warn(message, ...optionalParams);
-  };
-
-  console.debug = (message: any, ...optionalParams: any[]) => {
-    logger.debug(message, ...optionalParams);
-  };
-
   const app = await NestFactory.create(AppModule, { cors: true });
-  app.useLogger(app.get(CustomLogger));
+  if (process.env.LOCAL !== 'true') {
+    // Override console.log to also write to the file
+    console.log = (message: any, ...optionalParams: any[]) => {
+      logger.info(message, ...optionalParams);
+    };
+    console.error = (message: any, ...optionalParams: any[]) => {
+      logger.error(message, ...optionalParams);
+    };
+
+    console.warn = (message: any, ...optionalParams: any[]) => {
+      logger.warn(message, ...optionalParams);
+    };
+
+    console.debug = (message: any, ...optionalParams: any[]) => {
+      logger.debug(message, ...optionalParams);
+    };
+    app.useLogger(app.get(CustomLogger));
+  }
   ensureDirectoryExists(`./${Constants.uploadDir}/pictures`).catch();
   ensureDirectoryExists(`./${Constants.uploadDir}/videos`).catch();
 
@@ -48,6 +49,8 @@ async function bootstrap() {
       console.log(err);
     });
 
+  app.setGlobalPrefix('api');
+
   const config = new DocumentBuilder()
     .setTitle(Constants.name)
     .setDescription(Constants.description)
@@ -57,15 +60,18 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('swagger', app, document);
-  app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe());
-  app.use(
-    morgan('tiny', {
-      stream: {
-        write: (message: string) => logger.info(message.trim()), // Redirect Morgan logs to Winston
-      },
-    }),
-  );
+  if (process.env.LOCAL !== 'true') {
+    app.use(
+      morgan('tiny', {
+        stream: {
+          write: (message: string) => logger.info(message.trim()), // Redirect Morgan logs to Winston
+        },
+      }),
+    );
+  } else {
+    app.use(morgan('dev'));
+  }
   await app.listen(process.env.PORT || 3000);
 }
 

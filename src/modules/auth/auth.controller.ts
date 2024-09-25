@@ -18,6 +18,9 @@ import { ChangePassOtpDto } from './dto/change-pass.dto';
 import { AuthGuard } from './auth.guard';
 import { User } from '../users/entities/user.entity';
 import { UserDecorator } from 'src/common/user.decorator';
+import { LanguageGuard } from 'src/common/language.guard';
+import { LanguageDec } from 'src/common/language.decorator';
+import { Language } from 'src/config/constants';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -32,28 +35,39 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('register')
-  register(@Body() createUserDto: CreateUserDto) {
-    return this.authService.register(createUserDto);
+  @UseGuards(LanguageGuard)
+  register(
+    @Body() createUserDto: CreateUserDto,
+    @LanguageDec() lang: Language,
+  ) {
+    return this.authService.register(createUserDto, lang);
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('verify-otp')
-  validateOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+  @UseGuards(LanguageGuard)
+  validateOtp(
+    @Body() verifyOtpDto: VerifyOtpDto,
+    @LanguageDec() lang: Language,
+  ) {
     return this.authService.validateOtp(
       verifyOtpDto.email,
       verifyOtpDto.otp,
       verifyOtpDto.save,
       verifyOtpDto.newEmail,
+      lang,
     );
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('resend-otp')
+  @UseGuards(LanguageGuard)
   sendOtp(
     @Query('email') emailOrPhone: string,
     @Query('isEmail', ParseBoolPipe) isEmail: boolean,
     @Query('register', ParseBoolPipe) register?: boolean,
     @Query('newEmail') newEmail?: string,
+    @LanguageDec() lang?: Language,
   ) {
     return this.authService.sendOtp(
       isEmail,
@@ -61,20 +75,29 @@ export class AuthController {
       null,
       register,
       newEmail,
+      lang,
     );
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('reset-pass')
-  resetPass(@Query('emailOrPhone') emailOrPhone: string) {
-    return this.authService.resetPassword(emailOrPhone);
+  @UseGuards(LanguageGuard)
+  resetPass(
+    @Query('emailOrPhone') emailOrPhone: string,
+    @LanguageDec() lang: Language,
+  ) {
+    return this.authService.resetPassword(emailOrPhone, lang);
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('change-pass')
-  changePass(@Body() changePassOtpDto: ChangePassOtpDto) {
+  @UseGuards(LanguageGuard)
+  changePass(
+    @Body() changePassOtpDto: ChangePassOtpDto,
+    @LanguageDec() lang: Language,
+  ) {
     const { email, password, otp } = changePassOtpDto;
-    return this.authService.changePassword(email, password, otp);
+    return this.authService.changePassword(email, password, otp, lang);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -86,9 +109,13 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('new-email')
-  @UseGuards(AuthGuard)
-  newEmail(@UserDecorator() user: User, @Query('email') newEmail: string) {
-    return this.authService.newEmail(user, newEmail);
+  @UseGuards(AuthGuard, LanguageGuard)
+  newEmail(
+    @UserDecorator() user: User,
+    @Query('email') newEmail: string,
+    @LanguageDec() lang: Language,
+  ) {
+    return this.authService.newEmail(user, newEmail, lang);
   }
 
   @UseGuards(AuthGuard)

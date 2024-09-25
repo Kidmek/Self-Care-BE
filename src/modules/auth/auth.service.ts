@@ -12,9 +12,12 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EmailService } from '../email/email.service';
 import { getSecondsDiff } from 'src/config/utils';
-import { Constants } from 'src/config/constants';
+import { Constants, ErrorMessages, Language } from 'src/config/constants';
 import { classToPlain } from 'class-transformer';
 import { AuthReqDto } from './dto/auth-req.dto';
+import { config } from 'dotenv';
+
+config();
 
 @Injectable()
 export class AuthService {
@@ -34,11 +37,11 @@ export class AuthService {
     return await this.jwtService.signAsync(payload);
   }
 
-  async checkPassword(user: User, password: string) {
+  async checkPassword(user: User, password: string, lang: Language = 'en') {
     user = await this.usersService.findOneById(user.id);
     const isMatch = bcrypt.compareSync(password, user.password);
     if (!isMatch) {
-      throw new BadRequestException('Wrong password');
+      throw new BadRequestException(ErrorMessages[lang].wrongPassword);
     }
   }
 
@@ -74,12 +77,15 @@ export class AuthService {
     };
   }
 
-  async register(createUserDto: CreateUserDto): Promise<any> {
+  async register(
+    createUserDto: CreateUserDto,
+    lang: Language = 'en',
+  ): Promise<any> {
     if (await this.usersService.findOneByEmail(createUserDto.email)) {
-      throw new BadRequestException('Email taken');
+      throw new BadRequestException(ErrorMessages[lang].emailTaken);
     }
     if (await this.usersService.findOneByPhone(createUserDto.phone)) {
-      throw new BadRequestException('Phone taken');
+      throw new BadRequestException(ErrorMessages[lang].phoneTaken);
     }
 
     let user: User = new User();
@@ -92,13 +98,13 @@ export class AuthService {
     user.phone = createUserDto.phone.slice(-9);
     user = await this.usersRepository.save(user);
     // const token =  await this.createToken(user);
-    const isEmailSent = await this.sendOtp(true, null, user, true);
+    const isEmailSent = await this.sendOtp(true, null, user, true, null, lang);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, otp: savedOtp, ...rest } = user;
 
     if (!isEmailSent) {
-      throw new BadRequestException('Unable to send verification code');
+      throw new BadRequestException(ErrorMessages[lang].unableToSendCode);
     }
     return {
       user: rest,
@@ -107,25 +113,33 @@ export class AuthService {
     };
   }
 
-  async resetPassword(emailOrPhone: string): Promise<any> {
+  async resetPassword(
+    emailOrPhone: string,
+    lang: Language = 'en',
+  ): Promise<any> {
     const user = await this.usersService.findOneByEmailOrPhone(emailOrPhone);
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(ErrorMessages[lang].userNotFound);
     }
 
-    const isEmailSent = await this.sendOtp(false, null, user);
+    const isEmailSent = await this.sendOtp(true, null, user, false, lang);
 
     return {
       isEmailSent,
     };
   }
 
-  async changePassword(email: string, password: string, otp: number) {
+  async changePassword(
+    email: string,
+    password: string,
+    otp: number,
+    lang: Language = 'en',
+  ) {
     const user = await this.usersService.findOneByEmailOrPhone(email);
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(ErrorMessages[lang].userNotFound);
     }
     if (
       getSecondsDiff(user.otpSentAt, new Date()) <
@@ -137,10 +151,10 @@ export class AuthService {
         this.usersRepository.save(user);
         return true;
       } else {
-        throw new BadRequestException('Incorrect Code');
+        throw new BadRequestException(ErrorMessages[lang].incorrectCode);
       }
     } else {
-      return new BadRequestException('OTP expired');
+      return new BadRequestException(ErrorMessages[lang].otpExpired);
     }
   }
 
@@ -149,10 +163,11 @@ export class AuthService {
     otp: number,
     save?: boolean,
     newEmail?: string,
+    lang: Language = 'en',
   ) {
     const user = await this.usersService.findOneByEmailOrPhone(email);
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(ErrorMessages[lang].userNotFound);
     }
     if (
       user.otpSentAt &&
@@ -167,10 +182,10 @@ export class AuthService {
         }
         return true;
       } else {
-        throw new BadRequestException('Incorrect Code');
+        throw new BadRequestException(ErrorMessages[lang].incorrectCode);
       }
     } else {
-      return new BadRequestException('OTP expired');
+      return new BadRequestException(ErrorMessages[lang].otpExpired);
     }
   }
 
@@ -180,50 +195,57 @@ export class AuthService {
     user?: User,
     register?: boolean,
     newEmail?: string,
+    lang: Language = 'en',
   ) {
     if (!user) {
       if (!emailOrPhone) {
-        throw new BadRequestException('Email or Phone Required');
+        throw new BadRequestException(ErrorMessages[lang].emailOrPhoneRequired);
       }
       user = await this.usersService.findOneByEmailOrPhone(emailOrPhone);
     }
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(ErrorMessages[lang].userNotFound);
     }
 
     if (
       user.otpSentAt &&
       getSecondsDiff(user.otpSentAt, new Date()) < Constants.otpResend * 60
     ) {
-      throw new BadRequestException('OTP resend time not reached');
+      throw new BadRequestException(
+        ErrorMessages[lang].otpResendTimeNotReached,
+      );
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
     user.otp = otp;
     user.otpSentAt = new Date();
     console.log('OTP', otp);
-    const isOtpSent = !register
-      ? await this.emailService.forgotPasswordEmail(
-          {
-            name: user.firstName + ' ' + user.lastName,
-            email: newEmail ?? isEmail ? user.email : user.phone,
-            otp,
-          },
-          isEmail,
-        )
-      : await this.emailService.verifyEmail(
-          {
-            name: user.firstName + ' ' + user.lastName,
-            email: newEmail ?? isEmail ? user.email : user.phone,
-            otp,
-          },
-          isEmail,
-        );
+    let isOtpSent = true;
+    if (process.env.LOCAL !== 'true') {
+      isOtpSent = !register
+        ? await this.emailService.forgotPasswordEmail(
+            {
+              name: user.firstName + ' ' + user.lastName,
+              email: newEmail ?? isEmail ? user.email : user.phone,
+              otp,
+            },
+            isEmail,
+          )
+        : await this.emailService.verifyEmail(
+            {
+              name: user.firstName + ' ' + user.lastName,
+              email: newEmail ?? isEmail ? user.email : user.phone,
+              otp,
+            },
+            isEmail,
+          );
 
-    if (!isOtpSent) {
-      throw new BadRequestException('Unable to send verification code');
+      if (!isOtpSent) {
+        throw new BadRequestException(ErrorMessages[lang].unableToSendCode);
+      }
     }
+
     await this.usersRepository.save(user);
     return isOtpSent;
   }
@@ -236,9 +258,10 @@ export class AuthService {
     this.usersRepository.save(user);
     return true;
   }
-  async newEmail(user: User, newEmail: string) {
+
+  async newEmail(user: User, newEmail: string, lang: Language = 'en') {
     if (!newEmail) {
-      throw new BadRequestException('Email required');
+      throw new BadRequestException(ErrorMessages[lang].emailRequired);
     }
     user = await this.usersService.findOneById(user.id);
     if (
@@ -246,8 +269,8 @@ export class AuthService {
         email: newEmail,
       })
     ) {
-      throw new BadRequestException('Email taken');
+      throw new BadRequestException(ErrorMessages[lang].emailTaken);
     }
-    await this.sendOtp(true, null, user, true, newEmail);
+    await this.sendOtp(true, null, user, true, newEmail, lang);
   }
 }

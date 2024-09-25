@@ -21,6 +21,6 @@ export const dataSourceOptions: DataSourceOptions & SeederOptions = {
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   synchronize: true,
   // logging: true,
-  logging: ['query', 'error'],
+  // logging: ['query', 'error'],
   seeds: ['dist/config/seeds/**.seeder.js'],
 };

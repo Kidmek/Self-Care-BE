@@ -11,7 +11,7 @@ export class Base {
 
   @Exclude()
   @Column({
-    type: 'datetime',
+    type: 'timestamp',
     nullable: true,
   })
   public updatedAt: Date;

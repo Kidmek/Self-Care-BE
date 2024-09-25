@@ -22,6 +22,9 @@ import { AuthGuard } from '../auth/auth.guard';
 import { UserDecorator } from 'src/common/user.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { LanguageGuard } from 'src/common/language.guard';
+import { LanguageDec } from 'src/common/language.decorator';
+import { Language } from 'src/config/constants';
 
 @Controller('users')
 @ApiTags('users')
@@ -39,10 +42,14 @@ export class UsersController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, LanguageGuard)
   @Put()
-  update(@UserDecorator() user: User, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(user, updateUserDto);
+  update(
+    @UserDecorator() user: User,
+    @Body() updateUserDto: UpdateUserDto,
+    @LanguageDec() lang: Language,
+  ) {
+    return this.usersService.updateSelf(user, updateUserDto, lang);
   }
 
   @HttpCode(HttpStatus.OK)
