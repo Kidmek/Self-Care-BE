@@ -184,12 +184,9 @@ export class AnalyticsService {
       .createQueryBuilder('user')
       .select('EXTRACT(MONTH FROM user.createdAt)', 'name')
       .addSelect('COUNT(*)', 'count')
-      .where({
-        role: 'customer',
-      })
+      .where('role = :role', { role: 'customer' })
+      .andWhere('EXTRACT(YEAR FROM user.createdAt) = :year', { year })
       .groupBy('EXTRACT(MONTH FROM user.createdAt)')
-      .addGroupBy('EXTRACT(YEAR FROM user.createdAt)')
-      .having('EXTRACT(YEAR FROM user.createdAt) = :year', { year })
       .getRawMany();
 
     customers.forEach((t) => {
