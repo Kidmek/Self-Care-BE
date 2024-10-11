@@ -25,4 +25,10 @@ export class CreateTipDto {
 
   @ApiProperty()
   id: number;
+
+  @ApiProperty()
+  removedPictures: string;
+
+  @ApiProperty()
+  removedVideos: string;
 }

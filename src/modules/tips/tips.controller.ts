@@ -8,6 +8,7 @@ import {
   Delete,
   UseInterceptors,
   UploadedFiles,
+  UseGuards,
 } from '@nestjs/common';
 import { TipsService } from './tips.service';
 import { CreateTipDto } from './dto/create-tip.dto';
@@ -17,6 +18,9 @@ import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileValidationPipe } from './interceptor/file.pipe';
 import { memoryStorage } from 'multer';
 import { TipType } from './entities/tip.entity';
+import { AuthGuard } from '../auth/auth.guard';
+import { UserDecorator } from 'src/common/user.decorator';
+import { User } from '../users/entities/user.entity';
 
 @Controller('tips')
 @ApiTags('tips')
@@ -24,6 +28,7 @@ export class TipsController {
   constructor(private readonly tipsService: TipsService) {}
 
   @Post()
+  @UseGuards(AuthGuard)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -92,32 +97,43 @@ export class TipsController {
       pictures?: Express.Multer.File[];
       videos?: Express.Multer.File[];
     },
+
+    @UserDecorator() user: User,
   ) {
-    return this.tipsService.create(files, createTipDto);
+    return this.tipsService.create(files, createTipDto, user);
   }
 
   @Get()
+  @UseGuards(AuthGuard)
   findAll() {
     return this.tipsService.findAll();
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard)
   findOne(@Param('id') id: string) {
     return this.tipsService.findOne(+id);
   }
 
   @Get('/type/:type')
+  @UseGuards(AuthGuard)
   findByType(@Param('type') type: TipType) {
     return this.tipsService.findByType(type);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTipDto: UpdateTipDto) {
-    return this.tipsService.update(+id, updateTipDto);
+  @UseGuards(AuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body() updateTipDto: UpdateTipDto,
+    @UserDecorator() user: User,
+  ) {
+    return this.tipsService.update(+id, updateTipDto, user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tipsService.remove(+id);
+  @UseGuards(AuthGuard)
+  remove(@Param('id') id: string, @UserDecorator() user: User) {
+    return this.tipsService.remove(+id, user);
   }
 }

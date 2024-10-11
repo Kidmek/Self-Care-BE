@@ -8,6 +8,8 @@ import { Tip, TipType } from './entities/tip.entity';
 import { Media } from './entities/media.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class TipsService {
@@ -16,6 +18,7 @@ export class TipsService {
     private tipsRepository: Repository<Tip>,
     @InjectRepository(Media)
     private mediasRepository: Repository<Media>,
+    private usersService: UsersService,
   ) {}
 
   async create(
@@ -24,19 +27,29 @@ export class TipsService {
       videos?: Express.Multer.File[];
     },
     createTipDto: CreateTipDto,
+    user: User,
   ) {
+    this.usersService.checkPrivilage(user);
+    console.log(createTipDto);
     let tip = new Tip();
+    let medias = [];
     if (createTipDto.id) {
       tip = await this.findOne(createTipDto.id);
-
-      tip.media.forEach((m) => {
-        this.removeFile(
-          (m.type === 'VIDEO' ? 'videos/' : 'pictures/') + m.fileName,
-        );
-        this.mediasRepository.delete(m);
-      });
+      const removedVideos = createTipDto.removedVideos?.split(',') ?? [];
+      const removedPictures = createTipDto.removedPictures?.split(',') ?? [];
+      this.getMedias([...removedVideos, ...removedPictures], tip.media).forEach(
+        (m) => {
+          this.removeFile(
+            (m.type === 'VIDEO' ? 'videos/' : 'pictures/') + m.fileName,
+          );
+          this.mediasRepository.delete(m);
+        },
+      );
+      medias = tip.media.filter(
+        (m) =>
+          ![...removedVideos, ...removedPictures].includes(m.id.toString()),
+      );
     }
-    const medias = [];
     const temp = files.pictures ?? [];
 
     const promise = temp.concat(files.videos ?? [])?.map(async (f) => {
@@ -80,12 +93,29 @@ export class TipsService {
     return this.tipsRepository.findBy({ type });
   }
 
-  update(id: number, updateTipDto: UpdateTipDto) {
+  update(id: number, updateTipDto: UpdateTipDto, user: User) {
+    this.usersService.checkPrivilage(user);
     console.log(updateTipDto);
     return `This action updates a #${id} tip`;
   }
 
-  async remove(id: number) {
+  getMedias(ids: string[], medias: Media[]): Media[] {
+    // Create a Map for quick lookup of media by id
+    const mediaMap = new Map<string, Media>();
+
+    // Populate the Map with media items
+    medias.forEach((media) => {
+      mediaMap.set(media.id.toString(), media);
+    });
+
+    // Retrieve media objects for the given ids
+    return ids
+      .map((id) => mediaMap.get(id))
+      .filter((media) => media !== undefined) as Media[];
+  }
+
+  async remove(id: number, user: User) {
+    this.usersService.checkPrivilage(user);
     const tip = await this.findOne(id);
 
     for (const m of tip.media) {

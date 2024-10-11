@@ -7,6 +7,7 @@ import { Tip } from '../tips/entities/tip.entity';
 import { TotalAnalytics } from './dto/total-analytics.dto';
 import { Analytic, AnalyticField } from './entities/analytics.entity';
 import { AnalyticDTO } from './analytics.controller';
+import { UsersService } from '../users/users.service';
 
 enum AnalyticName {
   USER = 'User',
@@ -25,6 +26,7 @@ export class AnalyticsService {
     private feedbackRepository: Repository<Feedback>,
     @InjectRepository(Tip)
     private tipRepository: Repository<Tip>,
+    private usersService: UsersService,
   ) {}
 
   async addAnalytic(addAnalyticsDtos: AnalyticDTO, user: User) {
@@ -73,7 +75,8 @@ export class AnalyticsService {
     return 'Saved';
   }
 
-  async findAll() {
+  async findAll(user: User) {
+    this.usersService.checkPrivilage(user);
     const totalList: TotalAnalytics[] = [];
     const totalUsers: TotalAnalytics[] = await this.userRepository
       .createQueryBuilder('users')
@@ -165,7 +168,9 @@ export class AnalyticsService {
     return res;
   }
 
-  async findByYear(year: number) {
+  async findByYear(year: number, user: User) {
+    this.usersService.checkPrivilage(user);
+
     const totalList: TotalAnalytics[] = [];
 
     const years = await this.userRepository

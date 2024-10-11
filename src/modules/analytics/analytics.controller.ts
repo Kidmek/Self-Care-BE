@@ -13,13 +13,18 @@ export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Get()
-  findAll() {
-    return this.analyticsService.findAll();
+  @UseGuards(AuthGuard)
+  findAll(@UserDecorator() user: User) {
+    return this.analyticsService.findAll(user);
   }
 
   @Get(':year')
-  findCustomersByYear(@Param('year') year: number) {
-    return this.analyticsService.findByYear(year);
+  @UseGuards(AuthGuard)
+  findCustomersByYear(
+    @Param('year') year: number,
+    @UserDecorator() user: User,
+  ) {
+    return this.analyticsService.findByYear(year, user);
   }
 
   @UseGuards(AuthGuard)

@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Query } from '@nestjs/common';
 import { FeedbacksService } from './feedbacks.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -31,17 +22,8 @@ export class FeedbacksController {
   }
 
   @Get()
-  findAll(@Query() pageQueryDto: PageQueryDto) {
-    return this.feedbacksService.findAll(pageQueryDto);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.feedbacksService.findOne(+id);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.feedbacksService.remove(+id);
+  @UseGuards(AuthGuard)
+  findAll(@Query() pageQueryDto: PageQueryDto, @UserDecorator() user: User) {
+    return this.feedbacksService.findAll(pageQueryDto, user);
   }
 }

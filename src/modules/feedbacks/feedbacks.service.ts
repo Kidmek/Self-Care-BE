@@ -26,7 +26,8 @@ export class FeedbacksService {
     return await this.feedbackRepostiory.save(feedback);
   }
 
-  async findAll(pageQueryDto: PageQueryDto) {
+  async findAll(pageQueryDto: PageQueryDto, user: User) {
+    this.userService.checkPrivilage(user);
     const queryBuilder = this.feedbackRepostiory
       .createQueryBuilder('feedback')
       .leftJoinAndSelect('feedback.user', 'user');
@@ -60,13 +61,5 @@ export class FeedbacksService {
       }),
       pageMetaDto,
     );
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} feedback`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} feedback`;
   }
 }
