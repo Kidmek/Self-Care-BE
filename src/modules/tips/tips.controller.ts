@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UseInterceptors,
@@ -12,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { TipsService } from './tips.service';
 import { CreateTipDto } from './dto/create-tip.dto';
-import { UpdateTipDto } from './dto/update-tip.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileValidationPipe } from './interceptor/file.pipe';
@@ -59,20 +57,12 @@ export class TipsController {
           },
           description: 'Upload up to 4 videos',
         },
-        title: {
-          type: 'string',
-          description: 'Title must not be longer than 40 characters.',
-          maxLength: 40,
-        },
+
         description: {
           type: 'string',
           description: 'Description of the tip',
         },
-        amh_title: {
-          type: 'string',
-          description: 'Amharic Title must not be longer than 40 characters.',
-          maxLength: 40,
-        },
+
         amh_description: {
           type: 'string',
           description: 'Amharic Description of the tip',
@@ -119,16 +109,6 @@ export class TipsController {
   @UseGuards(AuthGuard)
   findByType(@Param('type') type: TipType) {
     return this.tipsService.findByType(type);
-  }
-
-  @Patch(':id')
-  @UseGuards(AuthGuard)
-  update(
-    @Param('id') id: string,
-    @Body() updateTipDto: UpdateTipDto,
-    @UserDecorator() user: User,
-  ) {
-    return this.tipsService.update(+id, updateTipDto, user);
   }
 
   @Delete(':id')

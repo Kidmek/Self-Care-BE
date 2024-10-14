@@ -14,14 +14,8 @@ export class Tip extends Base {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 40 })
-  title: string;
-
   @Column({ type: 'varchar' })
   description: string;
-
-  @Column({ type: 'varchar', length: 40 })
-  amh_title: string;
 
   @Column({ type: 'varchar' })
   amh_description: string;

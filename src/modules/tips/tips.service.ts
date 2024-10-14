@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateTipDto } from './dto/create-tip.dto';
-import { UpdateTipDto } from './dto/update-tip.dto';
 import { Constants } from 'src/config/constants';
 import { existsSync, mkdirSync, writeFile, unlink } from 'fs';
 import { join } from 'path';
@@ -30,7 +29,6 @@ export class TipsService {
     user: User,
   ) {
     this.usersService.checkPrivilage(user);
-    console.log(createTipDto);
     let tip = new Tip();
     let medias = [];
     if (createTipDto.id) {
@@ -66,10 +64,8 @@ export class TipsService {
     await Promise.all(promise);
 
     tip.description = createTipDto.description;
-    tip.title = createTipDto.title;
 
     tip.amh_description = createTipDto.amh_description;
-    tip.amh_title = createTipDto.amh_title;
     tip.type = createTipDto.type;
     await this.mediasRepository.save(medias);
     tip.media = medias;
@@ -91,12 +87,6 @@ export class TipsService {
 
   findByType(type: TipType) {
     return this.tipsRepository.findBy({ type });
-  }
-
-  update(id: number, updateTipDto: UpdateTipDto, user: User) {
-    this.usersService.checkPrivilage(user);
-    console.log(updateTipDto);
-    return `This action updates a #${id} tip`;
   }
 
   getMedias(ids: string[], medias: Media[]): Media[] {

@@ -1,22 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, MaxLength } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 import { TipType } from '../entities/tip.entity';
 
 export class CreateTipDto {
-  @MaxLength(40, { message: 'Title must not be longer than 40 characters.' })
-  @IsNotEmpty()
   @ApiProperty()
-  title: string;
-
-  @ApiProperty()
+  @IsNotEmpty({ message: 'Description required' })
   description: string;
 
-  @MaxLength(40, { message: 'Title must not be longer than 40 characters.' })
-  @IsNotEmpty()
   @ApiProperty()
-  amh_title: string;
-
-  @ApiProperty()
+  @IsNotEmpty({ message: 'Amharic Description required' })
   amh_description: string;
 
   @ApiProperty()
