@@ -14,18 +14,18 @@ export class FileValidationPipe implements PipeTransform {
     let isPicture = true;
     let isVideo = true;
     // Assuming you have predefined size limits and file types
-    const MAX_SIZE = 15 * 1024 * 1024; // 15MB for example
+    // const MAX_SIZE = 15 * 1024 * 1024; // 15MB for example
     const allowedPictureTypes = 'image/';
     const allowedVideoTypes = 'video/';
     if (value) {
       Object.keys(value).forEach((field) => {
         value[field]?.forEach((file: Express.Multer.File) => {
           // Check file size
-          if (file.size > MAX_SIZE) {
-            throw new BadRequestException(
-              `File size limit exceeded for ${file.originalname}`,
-            );
-          }
+          // if (file.size > MAX_SIZE) {
+          //   throw new BadRequestException(
+          //     `File size limit exceeded for ${file.originalname}`,
+          //   );
+          // }
 
           console.log(file.mimetype);
 
